@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Document Management — Campus FAQ System{% endblock %}
+
+{% block content %}
+<div class="admin-page-container">
+  <div class="admin-header-row">
+    <div>
+      <h1 class="admin-title">Document Management Portal</h1>
+      <p class="admin-desc">Upload, inspect, and manage campus policy documents used for RAG semantic search.</p>
+    </div>
+    <div class="admin-actions-top">
+      <button id="load-samples-btn" class="btn btn-secondary" type="button">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        Load Sample Campus FAQs
+      </button>
+      <a href="/" class="btn btn-outline">Go to Helpdesk</a>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div id="admin-alert" class="admin-alert hidden" role="alert" aria-live="polite"></div>
+
+  <!-- System Statistics Grid -->
+  <section class="stats-grid" aria-label="System Metrics">
+    <div class="stat-card">
+      <div class="stat-label">Total Documents</div>
+      <div id="stat-total-docs" class="stat-value">{{ stats.total_documents }}</div>
+      <div class="stat-sub">Indexed in SQLite</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Chunks</div>
+      <div id="stat-total-chunks" class="stat-value">{{ stats.total_chunks }}</div>
+      <div class="stat-sub">Vector embeddings stored</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Embedding Model</div>
+      <div class="stat-value-text">bge-small-en-v1.5</div>
+      <div class="stat-sub">FastEmbed • 384 dimensions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Similarity Threshold</div>
+      <div class="stat-value">{{ default_threshold }}</div>
+      <div class="stat-sub">Cutoff for grounded answers</div>
+    </div>
+  </section>
+
+  <!-- Upload Section -->
+  <section class="admin-card upload-section" aria-labelledby="upload-heading">
+    <h2 id="upload-heading" class="card-title">Upload Campus FAQ Document</h2>
+    <p class="card-desc">Supported formats: <strong>PDF</strong> (.pdf), <strong>Word</strong> (.docx), and <strong>Plain Text</strong> (.txt). Documents are automatically split into section-aware chunks and indexed with FastEmbed.</p>
+    
+    <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop file here or click to upload">
+      <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+      </svg>
+      <div class="drop-text">
+        <strong>Click to select a file</strong> or drag and drop it here
+      </div>
+      <div class="drop-hint">PDF, DOCX, or TXT (Max 25 MB)</div>
+      <input type="file" id="file-input" accept=".pdf,.docx,.txt" class="file-input-hidden" aria-label="Upload document file">
+    </div>
+
+    <div id="upload-progress-container" class="upload-progress-container hidden">
+      <div class="progress-bar-bg">
+        <div id="upload-progress-bar" class="progress-bar-fill"></div>
+      </div>
+      <div id="upload-status-text" class="upload-status-text">Uploading and indexing document...</div>
+    </div>
+  </section>
+
+  <!-- Documents Table Section -->
+  <section class="admin-card table-section" aria-labelledby="docs-heading">
+    <div class="table-header-row">
+      <h2 id="docs-heading" class="card-title">Indexed Documents</h2>
+      <span class="badge badge-neutral"><span id="docs-count">{{ documents|length }}</span> total</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table" aria-label="Indexed Documents Table">
+        <thead>
+          <tr>
+            <th scope="col">Document Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Size</th>
+            <th scope="col">Chunks</th>
+            <th scope="col">Uploaded</th>
+            <th scope="col" class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="documents-tbody">
+          {% if documents %}
+            {% for doc in documents %}
+            <tr id="doc-row-{{ doc.id }}">
+              <td class="cell-filename">
+                <span class="file-icon-badge {{ doc.file_type|lower }}">{{ doc.file_type }}</span>
+                <span class="filename-text" title="{{ doc.filename }}">{{ doc.filename }}</span>
+              </td>
+              <td><span class="badge badge-outline">{{ doc.file_type }}</span></td>
+              <td>{{ (doc.file_size / 1024)|round(1) }} KB</td>
+              <td><strong>{{ doc.chunk_count }}</strong> chunks</td>
+              <td class="cell-date">{{ doc.uploaded_at }}</td>
+              <td class="cell-actions">
+                <button class="btn-sm btn-outline view-chunks-btn" data-doc-id="{{ doc.id }}" data-filename="{{ doc.filename }}" type="button">
+                  View Chunks
+                </button>
+                <button class="btn-sm btn-danger delete-doc-btn" data-doc-id="{{ doc.id }}" data-filename="{{ doc.filename }}" type="button">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr id="empty-table-row">
+              <td colspan="6" class="empty-cell">
+                <div class="empty-state-content">
+                  <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <p>No campus documents indexed yet.</p>
+                  <p class="empty-sub">Upload a document above or click "Load Sample Campus FAQs" to get started.</p>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Modal for Inspecting Document Chunks -->
+<div id="chunks-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title" class="modal-title">Document Chunks</h3>
+        <p id="modal-subtitle" class="modal-subtitle"></p>
+      </div>
+      <button id="modal-close-btn" class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div id="modal-body" class="modal-body">
+      <!-- Dynamically filled with chunk cards -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin.js"></script>
+{% endblock %}

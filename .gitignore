@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Runtime SQLite Database & WAL files
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite3
+data/*.sqlite3-journal
+
+# Uploaded runtime user documents (keep .gitkeep)
+data/uploads/*
+!data/uploads/.gitkeep
+
+# IDEs & System
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.log

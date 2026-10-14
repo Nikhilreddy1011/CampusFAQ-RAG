@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Campus Helpdesk FAQ Assistant{% endblock %}
+
+{% block content %}
+<div class="chat-page-container">
+  <!-- Welcome and Guidance Banner -->
+  <section class="welcome-card" aria-labelledby="welcome-heading">
+    <div class="welcome-content">
+      <h1 id="welcome-heading" class="welcome-title">Ask Campus Services & Academic FAQ</h1>
+      <p class="welcome-desc">
+        Get direct answers grounded in official campus policies. Every answer includes citations linking directly to the supporting excerpts from uploaded documents.
+      </p>
+      
+      {% if stats.total_documents == 0 %}
+      <div class="notice-box warning">
+        <svg class="notice-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div>
+          <strong>Knowledge base is currently empty.</strong> Visit the <a href="/admin">Admin Portal</a> to upload documents or load the sample campus FAQ set.
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="example-questions" aria-label="Suggested campus questions">
+        <span class="example-label">Try asking:</span>
+        <button class="example-chip" type="button" data-query="What is the deadline to add or drop a course?">Add/Drop Deadlines</button>
+        <button class="example-chip" type="button" data-query="How much is a student commuter parking permit?">Commuter Parking Fee</button>
+        <button class="example-chip" type="button" data-query="What are the walk-in hours for the Student Health Center?">Health Clinic Walk-In Hours</button>
+        <button class="example-chip" type="button" data-query="Can I change my meal plan and when do dining dollars expire?">Meal Plan Changes & Expiry</button>
+        <button class="example-chip" type="button" data-query="What is the hourly wage and weekly limit for Federal Work-Study?">Work-Study Hours & Wage</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Chat Stream -->
+  <section class="chat-card" aria-label="Chat Conversation">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <span class="status-indicator-dot online"></span>
+        <span class="chat-status-text">FAQ Assistant Ready</span>
+      </div>
+      <div class="chat-actions">
+        <button id="clear-chat-btn" class="btn-text" type="button" title="Clear conversation history">
+          <svg class="btn-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Reset Chat
+        </button>
+      </div>
+    </div>
+
+    <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-label="Conversation Messages">
+      <!-- Default initial message -->
+      <div class="message-row bot-row">
+        <div class="avatar bot-avatar" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+          </svg>
+        </div>
+        <div class="message-bubble bot-bubble">
+          <div class="message-meta">
+            <span class="sender-name">Campus Assistant</span>
+            <span class="time-stamp">Just now</span>
+          </div>
+          <div class="message-text">
+            Hello! I am your Campus FAQ Assistant. You can ask me questions about registration deadlines, financial aid, parking permits, student health, and campus residence policies. How can I help you today?
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-indicator" class="loading-row hidden" aria-live="assertive">
+      <div class="avatar bot-avatar" aria-hidden="true">
+        <div class="spinner-dot"></div>
+      </div>
+      <div class="loading-bubble">
+        <span class="pulse-text">Searching campus documents...</span>
+      </div>
+    </div>
+
+    <!-- Chat Input Form -->
+    <form id="chat-form" class="chat-input-form" onsubmit="return false;">
+      <div class="input-wrapper">
+        <label for="student-query-input" class="sr-only">Your campus question</label>
+        <textarea
+          id="student-query-input"
+          class="chat-textarea"
+          placeholder="Type your question here..."
+          rows="1"
+          required
+          aria-label="Student question input"
+        ></textarea>
+        <button id="send-btn" type="submit" class="send-btn" aria-label="Send question">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+          <span>Ask</span>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span class="input-hint">Enter to send • Shift+Enter for newline</span>
+        <span class="retrieval-note">Answers are strictly grounded in indexed campus documents.</span>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/chat.js"></script>
+{% endblock %}
